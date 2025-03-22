@@ -4,74 +4,72 @@ import torch
 import pickle
 from sklearn.metrics.pairwise import cosine_similarity
 
-# Load the course embeddings DataFrame
+# Load course embeddings
 with open("course_embeddings.pkl", "rb") as f:
     course_embeddings = pickle.load(f)
 
-# Ensure 'Embeddings' column exists and process it
+# Process embeddings
 if "Embeddings" in course_embeddings.columns:
     course_embeddings["Embeddings"] = course_embeddings["Embeddings"].apply(
         lambda x: x.tolist() if isinstance(x, torch.Tensor) else x
     )
-    
-    # Extract embeddings as a separate DataFrame
     embeddings_df = pd.DataFrame(course_embeddings["Embeddings"].to_list())
-
-    # Drop original 'Embeddings' column and merge expanded embeddings
     course_embeddings = pd.concat([course_embeddings.drop(columns=["Embeddings"]), embeddings_df], axis=1)
 else:
     st.error("The DataFrame does not contain a column named 'Embeddings'.")
     st.stop()
 
-# Compute cosine similarity between course embeddings
+# Compute cosine similarity
 similarity_matrix = cosine_similarity(embeddings_df)
 
 # Streamlit UI
 st.title("🎓 Course Recommendation System")
 
-# Course selection dropdown
+# Select a course
+dropdown_style = """
+    <style>
+        div[data-baseweb="select"] > div {
+            background-color: #444;
+            color: white;
+        }
+    </style>
+"""
+st.markdown(dropdown_style, unsafe_allow_html=True)
 selected_course = st.selectbox("Select a course:", course_embeddings["Course Name"])
 
 if selected_course:
-    # Find the index of the selected course
     course_idx = course_embeddings[course_embeddings["Course Name"] == selected_course].index[0]
-
-    # Get similarity scores for the selected course
     similarity_scores = list(enumerate(similarity_matrix[course_idx]))
-
-    # Sort courses based on similarity scores (excluding itself)
-    sorted_courses = sorted(similarity_scores, key=lambda x: x[1], reverse=True)[1:6]  # Top 5 recommendations
+    sorted_courses = sorted(similarity_scores, key=lambda x: x[1], reverse=True)[1:6]
 
     st.subheader("📌 Recommended Courses:")
     
-    # Display recommended courses in a card format
     for idx, score in sorted_courses:
-        recommended_course = course_embeddings.iloc[idx]["Course Name"]
-        university = course_embeddings.iloc[idx]["University"]
-        rating = course_embeddings.iloc[idx]["Course Rating"]
-        description = course_embeddings.iloc[idx]["Course Description"]
-        url = course_embeddings.iloc[idx]["Course URL"]
+        recommended_course = course_embeddings.iloc[idx]
+        course_name = recommended_course["Course Name"]
+        description = recommended_course["Course Description"][:150] + "..."  # Truncate description
+        rating = recommended_course["Course Rating"]
+        url = recommended_course["Course URL"]
         
-        with st.container():
-            st.markdown(
-                f"""
-                <div style='padding: 10px; border-radius: 10px; background-color: #f4f4f4; margin-bottom: 10px;'>
-                    <h4>{recommended_course} ({university})</h4>
-                    <p><strong>⭐ Rating:</strong> {rating}</p>
-                    <p><strong>Description:</strong> {description[:150]}...</p>
-                    <a href='{url}' target='_blank'><button style='background-color:#4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 5px;'>View Course</button></a>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+        card_html = f"""
+        <div style="background: rgba(0, 0, 0, 0.6); padding: 15px; border-radius: 10px; margin: 10px 0; color: white;">
+            <h3 style="margin-bottom: 5px;">{course_name}</h3>
+            <p style="font-size: 14px;">{description}</p>
+            <p><b>⭐ Rating:</b> {rating}</p>
+            <a href="{url}" target="_blank" style="text-decoration: none;">
+                <button style="background: #ff4b4b; color: white; padding: 7px 15px; border: none; border-radius: 5px; cursor: pointer;">
+                    View Course
+                </button>
+            </a>
+        </div>
+        """
+        st.markdown(card_html, unsafe_allow_html=True)
 
-# Search functionality
+# Search courses
 st.subheader("🔍 Search Courses")
 search_query = st.text_input("Enter course name:")
 if search_query:
-    filtered_courses = course_embeddings[
-        course_embeddings["Course Name"].str.contains(search_query, case=False, na=False)
-    ]
+    filtered_courses = course_embeddings[course_embeddings["Course Name"].str.contains(search_query, case=False, na=False)]
     st.dataframe(filtered_courses)
 
 # Save processed data button
