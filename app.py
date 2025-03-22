@@ -1,43 +1,49 @@
 import streamlit as st
-import pickle
+import pandas as pd
 import numpy as np
-from sentence_transformers import SentenceTransformer, util
+import pickle
+from sklearn.metrics.pairwise import cosine_similarity
 
-# Load precomputed embeddings
-with open('course_embeddings.pkl', 'rb') as f:
-    df = pickle.load(f)
+# Load course data
+@st.cache_data
+def load_data():
+    df = pd.read_csv("Coursera.csv")
+    with open("course_embeddings.pkl", "rb") as f:
+        course_embeddings = pickle.load(f)
+    return df, np.array(course_embeddings)
 
-# Load the same model used for embeddings
-model = SentenceTransformer('paraphrase-MiniLM-L3-v2')
+df, course_embeddings = load_data()
 
-# Function to recommend courses
-def recommend_courses(course_name, top_n=5):
-    if course_name not in df['Course Name'].values:
-        return []
+# Compute similarity matrix
+similarity_matrix = cosine_similarity(course_embeddings)
+
+# Course Recommendation Function
+def recommend_course(course_name, df, similarity_matrix, top_n=5):
+    if course_name not in df["Course Name"].values:
+        return ["Course not found in dataset."]
     
-    idx = df[df['Course Name'] == course_name].index[0]
-    query_embedding = df.loc[idx, 'Embeddings']
+    idx = df[df["Course Name"] == course_name].index[0]
+    similar_courses = list(enumerate(similarity_matrix[idx]))
+    similar_courses = sorted(similar_courses, key=lambda x: x[1], reverse=True)
+
+    recommendations = []
+    for i in range(1, top_n + 1):  # Skip itself
+        course_idx = similar_courses[i][0]
+        recommendations.append(df.iloc[course_idx]["Course Name"])
     
-    similarities = [util.cos_sim(query_embedding, emb).item() for emb in df['Embeddings']]
-    sorted_indices = np.argsort(similarities)[::-1][1:top_n+1]  # Exclude itself
-    
-    return df.iloc[sorted_indices][['Course Name', 'Course Description', 'Course Rating', 'Course URL']]
+    return recommendations
 
 # Streamlit UI
 st.title("📚 Course Recommendation System")
-st.write("Enter a course name to get recommendations based on similarity.")
 
-course_name = st.text_input("Enter a Course Name:")
-if st.button("Recommend"):
-    if course_name:
-        recommendations = recommend_courses(course_name)
-        if not recommendations.empty:
-            st.write("### Recommended Courses:")
-            for _, row in recommendations.iterrows():
-                st.write(f"**{row['Course Name']}**")
-                st.write(f"🔹 {row['Course Description'][:150]}...")
-                st.write(f"⭐ Rating: {row['Course Rating']}")
-                st.write(f"🔗 [Course Link]({row['Course URL']})")
-                st.markdown("---")
-        else:
-            st.error("No recommendations found. Try another course!")
+# Dropdown for course selection
+course_name = st.selectbox("Select a course:", df["Course Name"].values)
+
+# Recommend button
+if st.button("Recommend Similar Courses"):
+    recommendations = recommend_course(course_name, df, similarity_matrix)
+    
+    st.subheader("🔗 Recommended Courses:")
+    for i, rec in enumerate(recommendations):
+        st.write(f"{i+1}. {rec}")
+

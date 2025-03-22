@@ -1,9 +1,6 @@
 streamlit
-transformers
-torch
-sentence-transformers
 pandas
 numpy
 scikit-learn
-matplotlib
-requests
+torch
+transformers
