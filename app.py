@@ -8,7 +8,7 @@ st.set_page_config(page_title="Login Page", page_icon=":bar_chart:", layout="cen
 page_bg_img = """
 <style>
 [data-testid="stAppViewContainer"] {
-background-image: url("https://cdn.pixabay.com/photo/2023/01/19/14/03/book-7729199_1280.jpg");
+background-image: url("https://cdn.pixabay.com/photo/2016/09/05/15/03/candle-1646765_1280.jpg");
 background-size: cover;
 }
 </style>
