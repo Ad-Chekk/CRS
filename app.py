@@ -4,56 +4,11 @@ import torch
 import pickle
 from sklearn.metrics.pairwise import cosine_similarity
 
-
-
-import pandas as pd
-import torch
-import pickle
-
-# Load the pickle file
-with open("course_embeddings.pkl", "rb") as f:
-    course_embeddings = pickle.load(f)
-
-# Ensure it's a DataFrame
-if not isinstance(course_embeddings, pd.DataFrame):
-    raise TypeError(f"Expected a DataFrame, but got {type(course_embeddings)}")
-
-# Print column names to verify available columns
-print("Columns in DataFrame:", course_embeddings.columns)
-
-# Fix column case issue
-if 'Embeddings' in course_embeddings.columns:
-    embeddings_column = 'Embeddings'
-elif 'embeddings' in course_embeddings.columns:
-    embeddings_column = 'embeddings'
-else:
-    raise KeyError("The DataFrame does not contain a column named 'Embeddings' or 'embeddings'.")
-
-# Convert tensor values to lists safely
-course_embeddings = course_embeddings.applymap(lambda x: x.tolist() if isinstance(x, torch.Tensor) else x)
-
-# Expand the 'Embeddings' column into separate columns if it's a list of tensors
-try:
-    expanded_embeddings = pd.DataFrame(course_embeddings[embeddings_column].to_list())
-except Exception as e:
-    raise ValueError(f"Error while expanding '{embeddings_column}'. Ensure it contains lists of numerical values.") from e
-
-# Merge expanded embeddings back into the original DataFrame
-course_embeddings = pd.concat([course_embeddings.drop(columns=[embeddings_column]), expanded_embeddings], axis=1)
-
-# Display the first few rows
-print(course_embeddings.head())
-
-# Optionally, save the modified DataFrame
-course_embeddings.to_csv("processed_embeddings.csv", index=False)
-
-
-
 # Load the course embeddings DataFrame
 with open("course_embeddings.pkl", "rb") as f:
     course_embeddings = pickle.load(f)
 
-# Ensure the 'Embeddings' column exists and process it
+# Ensure 'Embeddings' column exists and process it
 if "Embeddings" in course_embeddings.columns:
     course_embeddings["Embeddings"] = course_embeddings["Embeddings"].apply(
         lambda x: x.tolist() if isinstance(x, torch.Tensor) else x
@@ -88,12 +43,27 @@ if selected_course:
     sorted_courses = sorted(similarity_scores, key=lambda x: x[1], reverse=True)[1:6]  # Top 5 recommendations
 
     st.subheader("📌 Recommended Courses:")
+    
+    # Display recommended courses in a card format
     for idx, score in sorted_courses:
         recommended_course = course_embeddings.iloc[idx]["Course Name"]
         university = course_embeddings.iloc[idx]["University"]
         rating = course_embeddings.iloc[idx]["Course Rating"]
+        description = course_embeddings.iloc[idx]["Course Description"]
+        url = course_embeddings.iloc[idx]["Course URL"]
         
-        st.write(f"**{recommended_course}** ({university}) - ⭐ {rating}")
+        with st.container():
+            st.markdown(
+                f"""
+                <div style='padding: 10px; border-radius: 10px; background-color: #f4f4f4; margin-bottom: 10px;'>
+                    <h4>{recommended_course} ({university})</h4>
+                    <p><strong>⭐ Rating:</strong> {rating}</p>
+                    <p><strong>Description:</strong> {description[:150]}...</p>
+                    <a href='{url}' target='_blank'><button style='background-color:#4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 5px;'>View Course</button></a>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
 # Search functionality
 st.subheader("🔍 Search Courses")
@@ -108,5 +78,3 @@ if search_query:
 if st.button("💾 Save Processed Data"):
     course_embeddings.to_csv("processed_courses.csv", index=False)
     st.success("Processed data saved as 'processed_courses.csv'")
-
-# Run with: streamlit run app.py
