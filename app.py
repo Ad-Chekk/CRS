@@ -4,6 +4,20 @@ import torch
 import pickle
 from sklearn.metrics.pairwise import cosine_similarity
 
+st.set_page_config(page_title="Login Page", page_icon=":bar_chart:", layout="centered")
+page_bg_img = """
+<style>
+[data-testid="stAppViewContainer"] {
+background-image: url("https://cdn.pixabay.com/photo/2023/01/19/14/03/book-7729199_1280.jpg");
+background-size: cover;
+}
+</style>
+"""
+st.markdown(page_bg_img, unsafe_allow_html=True)
+
+
+
+
 # Load course embeddings
 with open("course_embeddings.pkl", "rb") as f:
     course_embeddings = pickle.load(f)
