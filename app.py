@@ -86,12 +86,12 @@ with col2:
     ax.set_ylabel("Course Name")
     st.pyplot(fig)
 
-    # Pie Chart - Course Rating Distribution
-    st.subheader("📊 Rating Distribution")
-    fig2, ax2 = plt.subplots()
-    course_embeddings["Course Rating"].value_counts().plot.pie(autopct="%1.1f%%", cmap="coolwarm", ax=ax2)
-    ax2.set_ylabel("")
-    st.pyplot(fig2)
+    # # Pie Chart - Course Rating Distribution
+    # st.subheader("📊 Rating Distribution")
+    # fig2, ax2 = plt.subplots()
+    # course_embeddings["Course Rating"].value_counts().plot.pie(autopct="%1.1f%%", cmap="coolwarm", ax=ax2)
+    # ax2.set_ylabel("")
+    # st.pyplot(fig2)
 
 # Search courses
 st.subheader("🔍 Search Courses")
