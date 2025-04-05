@@ -11,7 +11,9 @@ The **Course Recommendation System** is a **machine learning-powered web app** b
 - 💾 **Processed Data Export**: Save the processed courses as a CSV file.
 
  Screenshots
-![image](https://github.com/user-attachments/assets/20f6b43e-6f89-4154-8588-708ae708768b)
+
+![image](https://github.com/user-attachments/assets/856e3984-8a4d-44b6-9eed-d6e55659cea2)
+
 
 
   Installation & Usage
