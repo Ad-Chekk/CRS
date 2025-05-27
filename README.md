@@ -19,8 +19,8 @@ The **Course Recommendation System** is a **machine learning-powered web app** b
   Installation & Usage
 ### 1️⃣ Clone the Repository
 ```bash
-git clone https://github.com/yourusername/course-recommendation.git
-cd course-recommendation
+git clone https://github.com/Ad-Chekk/CRS.git
+cd CRS
 ```
  2️⃣ Install Dependencies
 ```bash
